@@ -44,6 +44,14 @@ El proceso de desarrollo de modelos no supervisados sigue los siguientes pasos:
 4. **Aplicación de algoritmos**: Uso de técnicas como *K-Means*, *DBSCAN*, *clustering jerárquico*, entre otras.
 5. **Interpretación y evaluación de resultados**: Comparación de métricas como el índice de la silueta.
 
+> Nota
+> Si se normaliza antes del split estoy introduciendo data-leakes. Es mejor normalizar después.
+> Conjunto de datos de test totalmente inalterados.
+> Si yo tengo datos de test distintos a los datos de entrenamiento ahí está el reto. Hay que retar al modelo
+> para que llegue a producción lo más robusto posible.
+
+## RESUMEN DETALLADO – TEMA 3: DIFERENTES IMPLEMENTACIONES DE K-MEANS
+
 ## **6. Importancia del preprocesamiento**
 Un buen preprocesamiento de datos mejora significativamente los resultados del aprendizaje no supervisado. Algunas tareas clave incluyen:
 - **Manejo de valores faltantes**: Imputación o eliminación de registros con datos ausentes.
@@ -51,8 +59,11 @@ Un buen preprocesamiento de datos mejora significativamente los resultados del a
 - **Transformaciones de datos**: Aplicación de transformaciones como *logaritmo* o *Box-Cox* para mejorar la distribución de los datos.
 - **Codificación de datos categóricos**: Conversión de variables de texto en valores numéricos.
 
+![alt text](image.png)
+
 > [!NOTE]
 > No es es lo mismo un outlier (dato ruidoso) que una anomalía. Un outlier es un dato que tiene un valor muy extraño y que no tiene sentido. Una anomalía es un caso funcional.
+> En el caso de la normalización hay un poco de aplastamiento aun que las distribuciones se mantienen. Son transformaciones lineales.
 
 ## **7. Técnicas de transformación de datos**
 Para mejorar la calidad de los datos, se aplican diferentes transformaciones:
@@ -93,13 +104,103 @@ Para convertir variables categóricas en datos numéricos, existen varios métod
 - **Codificación binaria**: Convierte las categorías en valores binarios.
 - **Codificación target**: Usa la media de la variable objetivo dentro de cada categoría.
 
-Ejemplo de *One-Hot Encoding* en *Pandas*:
+![alt text](image-1.png)
+
+Aquí tienes ejemplos concretos de cada método para convertir variables categóricas en numéricas:
+
+### 1. **One-Hot Encoding**
 ```python
 import pandas as pd
 
-data = pd.DataFrame({'Color': ['Rojo', 'Verde', 'Azul', 'Rojo']})
-one_hot_encoded = pd.get_dummies(data['Color'])
+# Datos de ejemplo
+data = {'Color': ['Rojo', 'Azul', 'Verde', 'Azul']}
+df = pd.DataFrame(data)
+
+# Aplicar One-Hot Encoding
+df_encoded = pd.get_dummies(df, columns=['Color'])
+print(df_encoded)
 ```
+Salida:
+```
+   Color_Azul  Color_Rojo  Color_Verde
+0           0           1            0
+1           1           0            0
+2           0           0            1
+3           1           0            0
+```
+
+### 2. **Codificación Ordinal**
+```python
+from sklearn.preprocessing import OrdinalEncoder
+
+# Datos con orden intrínseco (ej: tamaño)
+data = {'Tamaño': ['Pequeño', 'Mediano', 'Grande', 'Mediano']}
+df = pd.DataFrame(data)
+
+# Definir orden y codificar
+encoder = OrdinalEncoder(categories=[['Pequeño', 'Mediano', 'Grande']])
+df['Tamaño_encoded'] = encoder.fit_transform(df[['Tamaño']])
+print(df)
+```
+Salida:
+```
+    Tamaño  Tamaño_encoded
+0  Pequeño             0.0
+1  Mediano             1.0
+2   Grande             2.0
+3  Mediano             1.0
+```
+
+### 3. **Codificación Binaria**
+```python
+import category_encoders as ce
+
+# Datos de ejemplo
+data = {'Categoría': ['A', 'B', 'C', 'A']}
+df = pd.DataFrame(data)
+
+# Aplicar Binary Encoding
+encoder = ce.BinaryEncoder(cols=['Categoría'])
+df_encoded = encoder.fit_transform(df)
+print(df_encoded)
+```
+Salida:
+```
+   Categoría_0  Categoría_1  Categoría_2
+0            0            0            1  # A → 001 (solo se muestran los bits necesarios)
+1            0            1            0  # B → 010
+2            0            1            1  # C → 011 
+3            0            0            1  
+```
+
+### 4. **Codificación Target (Mean Encoding)**
+```python
+# Datos con variable objetivo (para problemas supervisados)
+data = {
+    'Ciudad': ['NY', 'SF', 'NY', 'LA'],
+    'Ventas': [100, 200, 150, 50] 
+}
+df = pd.DataFrame(data)
+
+# Calcular media por categoría y reemplazar
+mean_encoding = df.groupby('Ciudad')['Ventas'].mean().to_dict()
+df['Ciudad_encoded'] = df['Ciudad'].map(mean_encoding)
+print(df)
+```
+Salida:
+```
+  Ciudad Ventas Ciudad_encoded  
+|------|-------|---------------|
+| NY   |    100|          125.0| (Media de NY: (100+150)/2)  
+| SF   |    200|          200.0|
+| NY   |    150|          125.0|
+| LA   |     50|           50.|
+```
+
+#### Nota importante: 
+- Para **One-Hot**, usa `pd.get_dummies()` o `OneHotEncoder` de scikit-learn.
+- La **codificación target** puede causar *overfitting*; considera usar técnicas como *smoothing* en datos pequeños.
+- La librería `category-encoders` incluye implementaciones avanzadas de estos métodos y otros adicionales como *Hashing* o *Leave-One-Out*.
 
 ## **10. Ejercicios prácticos**
 El documento incluye ejercicios aplicados al dataset de precios de viviendas de *Kaggle*, como:
@@ -117,6 +218,8 @@ lower_bound = Q1 - 1.5 * IQR
 upper_bound = Q3 + 1.5 * IQR
 data_cleaned = data[(data['price'] >= lower_bound) & (data['price'] <= upper_bound)]
 ```
+
+![alt text](image-2.png)
 
 ## **11. Referencias bibliográficas**
 - Zhang, P. (2022). *Unsupervised Learning Algorithms in Big Data*.

@@ -19,7 +19,12 @@
 
 > **Nota:**
 > Como podemos agrupar un conjunto de datos de cliente sin conocer previamente su comportamiento de compras?
-> 
+> Si existe un comportamiento similar significa que existe unas preferencias similares.
+> Cual es el objetivo de las técnicas de clustering (premisa)? -> Agrupamiento de datos no etiquetados y **descubrimiento** de patrones.
+> Ejemplos de aplicación? -> Las figuras geométricas son un tipo de agrupación. Agrupaciones de productos (moviles con especificaciones parecidas).
+> Como podemos saber si los resultados son buenos si no disponemos de etiquetas? -> La intuición es importante, de manera cuantitativa con fórmulas matemáticas.
+
+MIN 11.
 
 ---
 
